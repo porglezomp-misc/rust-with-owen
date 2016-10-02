@@ -34,6 +34,21 @@ impl<K, V> BTree<K, V> where K: Ord {
             }
         }
     }
+
+    pub fn find<'a>(&'a self, key: &K) -> Option<&'a V> {
+        match *self {
+            BTree::Empty => None,
+            BTree::Node { key: ref k0, ref val, ref left, ref right } => {
+                if key < k0 {
+                    left.find(key)
+                } else if key > k0 {
+                    right.find(key)
+                } else {
+                    Some(val)
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -66,5 +81,30 @@ mod tests {
             left: Box::new(BTree::Empty),
             right: Box::new(BTree::node(2, 13)),
         });
+    }
+
+    #[test]
+    fn test_find_nothing() {
+        let tree: BTree<i32, ()> = BTree::Empty;
+        assert_eq!(tree.find(&1), None);
+    }
+
+    #[test]
+    fn test_dont_find() {
+        let tree = BTree::node(1, 42);
+        assert_eq!(tree.find(&13), None);
+    }
+
+    #[test]
+    fn test_find_child() {
+        let tree = BTree::Node {
+            key: 1,
+            val: 42,
+            left: Box::new(BTree::node(0, 13)),
+            right: Box::new(BTree::node(2, 144)),
+        };
+        assert_eq!(tree.find(&1), Some(&42));
+        assert_eq!(tree.find(&0), Some(&13));
+        assert_eq!(tree.find(&2), Some(&144));
     }
 }
